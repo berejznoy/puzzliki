@@ -12,6 +12,8 @@ interface PuzzlePieceProps {
     totalCols: number;
     totalRows: number;
     isCorrect: boolean;
+    isDragging?: boolean;
+    onTouchStart?: (e: React.TouchEvent) => void;
 }
 
 function PuzzlePiece({
@@ -24,17 +26,17 @@ function PuzzlePiece({
     totalCols,
     totalRows,
     isCorrect,
+    isDragging = false,
+    onTouchStart,
 }: PuzzlePieceProps) {
     const handleDragStart = (e: React.DragEvent) => {
         e.dataTransfer.setData('text/plain', id.toString());
         e.dataTransfer.effectAllowed = 'move';
 
-        // Set drag image to be the piece itself
         const target = e.currentTarget as HTMLElement;
         e.dataTransfer.setDragImage(target, pieceWidth / 2, pieceHeight / 2);
     };
 
-    // Calculate exact background size and position
     const totalWidth = pieceWidth * totalCols;
     const totalHeight = pieceHeight * totalRows;
 
@@ -42,7 +44,8 @@ function PuzzlePiece({
         <div
             draggable
             onDragStart={handleDragStart}
-            className={`puzzle-piece ${isCorrect ? 'correct' : ''}`}
+            onTouchStart={onTouchStart}
+            className={`puzzle-piece ${isCorrect ? 'correct' : ''} ${isDragging ? 'dragging' : ''}`}
             style={{
                 width: pieceWidth,
                 height: pieceHeight,
@@ -50,6 +53,8 @@ function PuzzlePiece({
                 backgroundPosition: `-${col * pieceWidth}px -${row * pieceHeight}px`,
                 backgroundSize: `${totalWidth}px ${totalHeight}px`,
                 backgroundRepeat: 'no-repeat',
+                opacity: isDragging ? 0.3 : 1,
+                touchAction: 'none',
             }}
         />
     );

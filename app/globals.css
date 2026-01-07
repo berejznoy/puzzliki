@@ -202,9 +202,13 @@
     height: 100%;
     cursor: grab;
     border-radius: 4px;
-    transition: all 0.2s ease;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
     background-repeat: no-repeat;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
   }
 
   .puzzle-piece:hover {
@@ -215,6 +219,10 @@
 
   .puzzle-piece:active {
     cursor: grabbing;
+  }
+
+  .puzzle-piece.dragging {
+    opacity: 0.3;
   }
 
   .puzzle-piece.correct {
@@ -431,9 +439,22 @@
     padding: 0.5rem 1rem;
     min-height: 100vh;
     min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
   }
 
   .game-wrapper {
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     gap: 0.5rem;
   }
 
