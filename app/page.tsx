@@ -8,41 +8,100 @@ import { PuzzlePiece, createPuzzlePieces, shufflePieces } from './utils/puzzleUt
 
 type GameState = 'upload' | 'playing' | 'won';
 
-const GRID_SIZE = 4;
-const DEFAULT_PUZZLE_SIZE = 400;
+const PIECES_PER_SIDE = 4; // Base number of pieces
+const DEFAULT_PUZZLE_WIDTH = 400;
 
-function calculatePuzzleSize(): number {
-  if (typeof window === 'undefined') return DEFAULT_PUZZLE_SIZE;
+function calculatePuzzleDimensions(aspectRatio: number): { width: number; height: number; cols: number; rows: number } {
+  if (typeof window === 'undefined') {
+    return { width: DEFAULT_PUZZLE_WIDTH, height: DEFAULT_PUZZLE_WIDTH, cols: 4, rows: 4 };
+  }
 
-  const width = window.innerWidth;
-  const height = window.innerHeight;
+  const screenWidth = window.innerWidth;
+  const screenHeight = window.innerHeight;
 
-  // Desktop
-  if (width >= 1024) return 400;
+  // Calculate base size based on screen
+  let maxWidth: number;
+  let maxHeight: number;
 
-  // Tablet
-  if (width >= 768) return Math.min(350, width - 80);
+  if (screenWidth >= 1024) {
+    // Desktop
+    maxWidth = 400;
+    maxHeight = 400;
+  } else if (screenWidth >= 768) {
+    // Tablet
+    maxWidth = Math.min(350, screenWidth - 80);
+    maxHeight = Math.min(350, screenHeight - 200);
+  } else {
+    // Mobile landscape
+    maxWidth = screenWidth - 40;
+    maxHeight = screenHeight - 120;
+  }
 
-  // Mobile landscape - use available height minus space for UI
-  const availableHeight = height - 120; // header + controls
-  const availableWidth = width - 40; // padding
+  let puzzleWidth: number;
+  let puzzleHeight: number;
 
-  return Math.min(availableHeight, availableWidth, 350);
+  if (aspectRatio >= 1) {
+    // Landscape or square image
+    puzzleWidth = Math.min(maxWidth, maxHeight * aspectRatio);
+    puzzleHeight = puzzleWidth / aspectRatio;
+  } else {
+    // Portrait image
+    puzzleHeight = Math.min(maxHeight, maxWidth / aspectRatio);
+    puzzleWidth = puzzleHeight * aspectRatio;
+  }
+
+  // Ensure minimum size
+  puzzleWidth = Math.max(puzzleWidth, 200);
+  puzzleHeight = Math.max(puzzleHeight, 200);
+
+  // Calculate grid size based on aspect ratio
+  let cols: number;
+  let rows: number;
+
+  if (aspectRatio >= 1.5) {
+    // Very wide - 5x3 or 6x4
+    cols = 5;
+    rows = 3;
+  } else if (aspectRatio >= 1.2) {
+    // Wide - 5x4
+    cols = 5;
+    rows = 4;
+  } else if (aspectRatio >= 0.8) {
+    // Square-ish - 4x4
+    cols = 4;
+    rows = 4;
+  } else if (aspectRatio >= 0.67) {
+    // Tall - 4x5
+    cols = 4;
+    rows = 5;
+  } else {
+    // Very tall - 3x5
+    cols = 3;
+    rows = 5;
+  }
+
+  return { width: puzzleWidth, height: puzzleHeight, cols, rows };
 }
 
 export default function Home() {
   const [gameState, setGameState] = useState<GameState>('upload');
   const [imageUrl, setImageUrl] = useState<string>('');
+  const [aspectRatio, setAspectRatio] = useState<number>(1);
   const [pieces, setPieces] = useState<PuzzlePiece[]>([]);
   const [moveCount, setMoveCount] = useState(0);
-  const [puzzleSize, setPuzzleSize] = useState(DEFAULT_PUZZLE_SIZE);
+  const [puzzleDimensions, setPuzzleDimensions] = useState({ width: 400, height: 400, cols: 4, rows: 4 });
   const [isMounted, setIsMounted] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
 
     const updateSize = () => {
-      setPuzzleSize(calculatePuzzleSize());
+      setPuzzleDimensions(calculatePuzzleDimensions(aspectRatio));
     };
 
     updateSize();
@@ -53,13 +112,19 @@ export default function Home() {
       window.removeEventListener('resize', updateSize);
       window.removeEventListener('orientationchange', updateSize);
     };
-  }, []);
+  }, [isMounted, aspectRatio]);
 
-  const pieceSize = puzzleSize / GRID_SIZE;
+  const pieceWidth = puzzleDimensions.width / puzzleDimensions.cols;
+  const pieceHeight = puzzleDimensions.height / puzzleDimensions.rows;
 
-  const handleImageLoad = useCallback((url: string) => {
+  const handleImageLoad = useCallback((url: string, ratio: number) => {
     setImageUrl(url);
-    const newPieces = createPuzzlePieces(GRID_SIZE, GRID_SIZE);
+    setAspectRatio(ratio);
+
+    const dims = calculatePuzzleDimensions(ratio);
+    setPuzzleDimensions(dims);
+
+    const newPieces = createPuzzlePieces(dims.rows, dims.cols);
     const shuffled = shufflePieces(newPieces);
     setPieces(shuffled);
     setMoveCount(0);
@@ -78,6 +143,7 @@ export default function Home() {
   const handleNewGame = useCallback(() => {
     setGameState('upload');
     setImageUrl('');
+    setAspectRatio(1);
     setPieces([]);
     setMoveCount(0);
   }, []);
@@ -88,6 +154,10 @@ export default function Home() {
     setMoveCount(0);
     setGameState('playing');
   }, [pieces]);
+
+  const togglePreview = useCallback(() => {
+    setShowPreview(prev => !prev);
+  }, []);
 
   return (
     <>
@@ -107,13 +177,20 @@ export default function Home() {
             <div className="game-container">
               <div className="game-stats">
                 <span className="stat">Ходов: {moveCount}</span>
+                <button
+                  onClick={togglePreview}
+                  className="btn btn-hint"
+                  title="Показать оригинал"
+                >
+                  👁️
+                </button>
               </div>
               <PuzzleBoard
                 pieces={pieces}
-                rows={GRID_SIZE}
-                cols={GRID_SIZE}
-                pieceWidth={pieceSize}
-                pieceHeight={pieceSize}
+                rows={puzzleDimensions.rows}
+                cols={puzzleDimensions.cols}
+                pieceWidth={pieceWidth}
+                pieceHeight={pieceHeight}
                 imageUrl={imageUrl}
                 onPiecesChange={handlePiecesChange}
                 onWin={handleWin}
@@ -135,8 +212,8 @@ export default function Home() {
                 className="win-image"
                 style={{
                   backgroundImage: `url(${imageUrl})`,
-                  width: puzzleSize,
-                  height: puzzleSize,
+                  width: puzzleDimensions.width,
+                  height: puzzleDimensions.height,
                 }}
               />
               <div className="win-content">
@@ -155,6 +232,23 @@ export default function Home() {
           )}
         </div>
       </main>
+
+      {/* Image Preview Modal */}
+      {showPreview && (
+        <div className="preview-overlay" onClick={togglePreview}>
+          <div className="preview-content">
+            <div
+              className="preview-image"
+              style={{
+                backgroundImage: `url(${imageUrl})`,
+                width: Math.min(puzzleDimensions.width * 1.2, window.innerWidth - 40),
+                height: Math.min(puzzleDimensions.height * 1.2, window.innerHeight - 100),
+              }}
+            />
+            <p className="preview-hint">Нажмите, чтобы закрыть</p>
+          </div>
+        </div>
+      )}
     </>
   );
 }

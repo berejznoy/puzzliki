@@ -41,6 +41,10 @@
     flex-direction: column;
     align-items: center;
     gap: 2rem;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
   }
 
   .title {
@@ -202,13 +206,14 @@
     height: 100%;
     cursor: grab;
     border-radius: 4px;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    transition: transform 0.1s ease, box-shadow 0.1s ease, opacity 0.1s ease;
     background-repeat: no-repeat;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     touch-action: none;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .puzzle-piece:hover {
@@ -226,13 +231,79 @@
   }
 
   .puzzle-piece.correct {
-    box-shadow: 0 0 0 2px var(--success), 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 0 0 2px rgba(74, 222, 128, 0.6), 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 
   /* Game Controls */
   .game-controls {
     display: flex;
     gap: 1rem;
+  }
+
+  .game-stats {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .btn-hint {
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-hint:hover {
+    background: var(--border);
+    transform: scale(1.1);
+  }
+
+  /* Preview Overlay */
+  .preview-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  .preview-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .preview-image {
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
+
+  .preview-hint {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
   }
 
   .btn {

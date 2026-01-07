@@ -3,11 +3,11 @@
 import { useCallback } from 'react';
 
 interface ImageUploaderProps {
-    onImageLoad: (imageUrl: string) => void;
+    onImageLoad: (imageUrl: string, aspectRatio: number) => void;
 }
 
 export default function ImageUploader({ onImageLoad }: ImageUploaderProps) {
-    const handleFileSelect = useCallback((file: File) => {
+    const handleFileSelect = useCallback(async (file: File) => {
         if (!file.type.startsWith('image/')) {
             alert('Пожалуйста, выберите изображение');
             return;
@@ -16,7 +16,15 @@ export default function ImageUploader({ onImageLoad }: ImageUploaderProps) {
         const reader = new FileReader();
         reader.onload = (e) => {
             if (e.target?.result) {
-                onImageLoad(e.target.result as string);
+                const imageUrl = e.target.result as string;
+
+                // Get image dimensions to calculate aspect ratio
+                const img = new Image();
+                img.onload = () => {
+                    const aspectRatio = img.width / img.height;
+                    onImageLoad(imageUrl, aspectRatio);
+                };
+                img.src = imageUrl;
             }
         };
         reader.readAsDataURL(file);
