@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import ImageUploader from './components/ImageUploader';
 import PuzzleBoard from './components/PuzzleBoard';
-import OrientationOverlay from './components/OrientationOverlay';
 import { PuzzlePiece, createPuzzlePieces, shufflePieces } from './utils/puzzleUtils';
 
 type GameState = 'upload' | 'playing' | 'won';
@@ -161,7 +160,6 @@ export default function Home() {
 
   return (
     <>
-      <OrientationOverlay />
       <main className="main-container">
         <div className="game-wrapper">
           <h1 className="title">
